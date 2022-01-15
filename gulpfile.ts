@@ -1,43 +1,41 @@
 import { create as createServer } from "browser-sync";
 import { dest, series, src, task, watch } from "gulp";
 import loadPlugins from "gulp-load-plugins";
-import { join } from "pathe";
+import { resolveSourceGlob, resolveWatchGlob } from "./tools/globs.util";
+import { resolveDistDir, resolveSrcDir } from "./tools/resolve-dir.util";
 const panini = require("panini");
 
 const plugin = loadPlugins<Record<string, () => NodeJS.ReadWriteStream>>();
 const server = createServer();
 
-const resolveDir = (...paths: string[]) => join("src", ...paths);
+const dist = resolveDistDir();
 
-task("template", () => {
-    return src(resolveDir("mailings/**/*.html"))
+task("templates", () => {
+    return src(resolveSourceGlob("templates"))
         .pipe(plugin.plumber())
         .pipe(
             panini({
-                root: resolveDir("mailings"),
-                layouts: resolveDir("layouts"),
-                partials: resolveDir("partials"),
-                helpers: resolveDir("helpers"),
-                data: resolveDir("data")
+                root: resolveSrcDir("mailings"),
+                layouts: resolveSrcDir("layouts"),
+                partials: resolveSrcDir("partials"),
+                helpers: resolveSrcDir("helpers"),
+                data: resolveSrcDir("data")
             })
         )
-        .pipe(dest("dist"));
+        .pipe(dest(dist));
 });
 
 task("server", done => {
     server.init({
-        server: { baseDir: "dist" }
+        server: { baseDir: dist }
     });
     done();
 });
 
-task("build", series("template"));
+task("build", series("templates"));
 
 task("watch", () => {
-    watch(
-        "./src/{layouts,mailings,partials,helpers,data}/**/*",
-        series(panini.refresh, server.reload)
-    );
+    watch(resolveWatchGlob("templates")).on("change", series(panini.refresh, server.reload));
 });
 
 task("default", series("build"));
