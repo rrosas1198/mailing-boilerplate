@@ -8,13 +8,17 @@
         "name": "Renzo Rosas",
         "url": "https://github.com/rrosas1198"
     },
+    "scripts": {
+        "dev": "gulp",
+        "build": "gulp build"
+    },
     "gitHooks": {
         "commit-msg": "commitlint -e -V"
     },
     "devDependencies": {
         "@commitlint/cli": "^16.0.2",
         "@commitlint/config-conventional": "^16.0.0",
-        "@techkit/linter-config": "^0.1.0",
+        "@techkit/linter-config": "^0.2.0",
         "@types/browser-sync": "^2.26.3",
         "@types/gulp": "^4.0.9",
         "@types/gulp-load-plugins": "^0.0.33",
