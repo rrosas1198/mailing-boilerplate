@@ -1,14 +1,16 @@
 import { resolveSrcDir } from "./resolve-dir.util";
 
-const sourceGlobs = new Map<string, string>([
+type GlobValue = string | string[];
+
+const sourceGlobs = new Map<string, GlobValue>([
     ["templates", resolveSrcDir("mailings/**/*.html")],
     ["styles", resolveSrcDir("mailings/**/index.scss")]
 ]);
 
-const watchGlobs = new Map<string, string>([
+const watchGlobs = new Map<string, GlobValue>([
     ["templates", resolveSrcDir("{layouts,mailings,partials,helpers,data}/**/*")],
-    ["styles", resolveSrcDir("mailings/**/*.{scss,SCSS}")]
+    ["styles", resolveSrcDir("**/*.{scss,SCSS}")]
 ]);
 
-export const resolveSourceGlob = (name: string) => sourceGlobs.get(name) as string;
-export const resolveWatchGlob = (name: string) => watchGlobs.get(name) as string;
+export const resolveSourceGlob = (name: string) => sourceGlobs.get(name) as GlobValue;
+export const resolveWatchGlob = (name: string) => watchGlobs.get(name) as GlobValue;
