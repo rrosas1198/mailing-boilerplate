@@ -45,7 +45,6 @@ task("views:min", () => {
         .pipe(
             plugin.rename((path: any) => {
                 path.dirname = path.basename;
-                // path.suffix = ".min";
             })
         )
         .pipe(dest(dist))
