@@ -4,7 +4,7 @@ type GlobValue = string | string[];
 
 const sourceGlobs = new Map<string, GlobValue>([
     ["views", resolveSrcDir("mailings/**/*.html")],
-    ["scss", resolveSrcDir("mailings/**/index.scss")]
+    ["scss", resolveSrcDir("assets/styles/index.scss")]
 ]);
 
 const watchGlobs = new Map<string, GlobValue>([
