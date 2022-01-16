@@ -1,49 +1,38 @@
 import { create as createServer } from "browser-sync";
 import { rmSync } from "fs";
 import { dest, parallel, series, src, task, watch } from "gulp";
-import loadPlugins from "gulp-load-plugins";
 import { resolve } from "pathe";
-import { resolveSourceGlob, resolveWatchGlob } from "./tools/globs.util";
-import { resolveDistDir, resolveSrcDir } from "./tools/resolve-dir.util";
+import { loadPlugins } from "./tools/plugins/load-plugins.plugin";
+import { createPaniniStream, refreshPanini } from "./tools/plugins/panini.plugin";
+import { createSassStream } from "./tools/plugins/sass.plugin";
+import { resolveSourceGlob, resolveWatchGlob } from "./tools/utils/globs.util";
+import { resolveDistDir } from "./tools/utils/resolve-dir.util";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-type GulpStream = (...params: any[]) => NodeJS.ReadWriteStream;
-
-const panini = require("panini");
-const gulpSass = require("gulp-sass")(require("sass")) as GulpStream;
-
-const plugin = loadPlugins<Record<string, GulpStream>>();
+const plugin = loadPlugins();
 const server = createServer();
 
 const dist = resolveDistDir();
+
+const paniniStream = () => createPaniniStream();
+const sassStream = () => createSassStream();
 
 task("clean", done => {
     rmSync(resolve(dist), { force: true, recursive: true });
     done();
 });
 
-task("templates", () => {
-    return src(resolveSourceGlob("templates"))
+task("views", () => {
+    return src(resolveSourceGlob("views"))
         .pipe(plugin.plumber())
-        .pipe(
-            panini({
-                root: resolveSrcDir("mailings"),
-                layouts: resolveSrcDir("layouts"),
-                partials: resolveSrcDir("partials"),
-                // See: https://github.com/foundation/panini#pagelayouts
-                pageLayouts: {},
-                helpers: resolveSrcDir("helpers"),
-                data: resolveSrcDir("data")
-            })
-        )
+        .pipe(paniniStream())
         .pipe(plugin.prettier())
         .pipe(dest(dist));
 });
 
-task("styles", () => {
-    return src(resolveSourceGlob("styles"))
+task("scss", () => {
+    return src(resolveSourceGlob("scss"))
         .pipe(plugin.plumber())
-        .pipe(gulpSass())
+        .pipe(sassStream())
         .pipe(
             plugin.postcss([
                 require("postcss-preset-env")({ stage: 2 })
@@ -62,11 +51,11 @@ task("server", done => {
     done();
 });
 
-task("build", series("clean", parallel("templates", "styles")));
+task("build", series("clean", parallel("scss", "views")));
 
 task("watch", () => {
-    watch(resolveWatchGlob("templates")).on("change", series(panini.refresh, server.reload));
-    watch(resolveWatchGlob("styles")).on("change", series("styles", server.reload));
+    watch(resolveWatchGlob("views")).on("change", series(refreshPanini, server.reload));
+    watch(resolveWatchGlob("scss")).on("change", series("scss", refreshPanini, server.reload));
 });
 
 task("default", series("build", parallel("server", "watch")));
